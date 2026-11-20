@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- برای انتشار خارج از پلی‌استور می‌توانید به YouTube Access تغییر دهید؛ برای Google Play نام بدون علامت تجاری YouTube استفاده کنید -->
+    <string name="app_name">DirectStream Access</string>
+    <string name="badge_subtitle">Direct OOB • Iran Smart Bypass</string>
+    <string name="status_disconnected">Tap to Connect</string>
+    <string name="status_connecting">Connecting…</string>
+    <string name="status_connected">Connected</string>
+    <string name="status_error">Connection failed</string>
+    <string name="action_disconnect">Disconnect</string>
+    <string name="notif_channel_name">Connection Status</string>
+    <string name="notif_connected">Direct OOB Active • Iran Apps Bypassed</string>
+    <string name="hint_private_dns">Tip: Turn off Android Private DNS for best compatibility.</string>
+    <string name="disclosure_title">Local VPN Permission</string>
+    <string name="disclosure_message">This app uses Android VpnService locally on your device to optimize direct network routing and bypass domestic Iranian sites directly. No browsing data is collected or sent to external third-party servers.</string>
+    <string name="disclosure_accept">Accept &amp; Continue</string>
+</resources>
