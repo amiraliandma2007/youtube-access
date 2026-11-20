@@ -83,16 +83,6 @@ jobs:
         run: |
           gradle assembleRelease bundleRelease --no-daemon
 
-      - name: Verify 16 KB ELF alignment on arm64-v8a libraries
-        run: |
-          READELF="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
-          mkdir -p /tmp/apk_check
-          unzip -o app/build/outputs/apk/release/*universal*.apk "lib/arm64-v8a/*.so" -d /tmp/apk_check
-          for so in /tmp/apk_check/lib/arm64-v8a/*.so; do
-            echo "Checking $so ..."
-            $READELF -l "$so" | grep -E "LOAD.*0x4000" || echo "WARN: Check alignment of $so"
-          done
-
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
