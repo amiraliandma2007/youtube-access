@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.directaccess.app"
-        minSdk = 24       // Android 7.0 Nougat (lowest clean floor for Go 1.24 / Xray / VpnService)
+        minSdk = 29       // Android 7.0 Nougat (lowest clean floor for Go 1.24 / Xray / VpnService)
         targetSdk = 36    // Android 16 (Mandatory for Google Play 2026)
         versionCode = 1
         versionName = "1.0.0"
