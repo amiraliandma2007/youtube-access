@@ -23,14 +23,18 @@ jobs:
         with:
           go-version: '1.24'
 
-      - name: Set up Android SDK & NDK r28 (16 KB Page Size ready)
-        uses: android-actions/setup-android@v4
-        with:
-          cmdline-tools-version: '22.0'
-          packages: |
-            platforms;android-36
-            build-tools;36.0.0
-            ndk;28.0.13004108
+      - name: Set up Android SDK & NDK (Manual)
+        run: |
+         # 1. Download a valid version of command-line tools
+         curl -sSLo cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip
+         mkdir -p $ANDROID_HOME/cmdline-tools
+         unzip -q cmdline-tools.zip -d $ANDROID_HOME/cmdline-tools
+         mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+         export PATH=$ANDROID_HOME/cmdline-tools/latest/bin:$PATH
+
+         # 2. Accept licenses and install required SDK components
+         yes | sdkmanager --licenses > /dev/null
+         sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.0.13004108"
 
       - name: Set NDK Environment Variable
         run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> $GITHUB_ENV
