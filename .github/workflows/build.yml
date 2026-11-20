@@ -24,11 +24,16 @@ jobs:
           go-version: '1.24'
 
       - name: Set up Android SDK & NDK r28 (16 KB Page Size ready)
-        uses: android-actions/setup-android@v3
-      - name: Install NDK r28 & SDK 36
-        run: |
-          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.0.13004108"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> $GITHUB_ENV
+        uses: android-actions/setup-android@v4
+        with:
+          cmdline-tools-version: '22.0'
+          packages: |
+            platforms;android-36
+            build-tools;36.0.0
+            ndk;28.0.13004108
+
+      - name: Set NDK Environment Variable
+        run: echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> $GITHUB_ENV
 
       - name: Build patterniha/AndroidLibXrayLite (minSdk 24 + 16KB aligned)
         run: |
