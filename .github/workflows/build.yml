@@ -77,12 +77,12 @@ jobs:
       - name: Prepare latest Serverless-oob.jsonc + PattNG Iran routing
         run: python3 scripts/prepare_config.py app/src/main/assets/config.json
 
-      - name: Change wrapper permissions
-        run: chmod +x ./gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Build Release APKs (Universal + Per-ABI) & Play Store AAB
         run: |
-         ./gradlew clean assembleRelease bundleRelease --no-daemon
+         gradle assembleRelease bundleRelease --no-daemon
 
       - name: Build Release APKs (Universal + Per-ABI) & Play Store AAB
         run: |
