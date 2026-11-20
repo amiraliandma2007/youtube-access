@@ -1,0 +1,96 @@
+name: Build Universal APK & Play AAB
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+
+      - name: Set up Android SDK & NDK r28 (16 KB Page Size ready)
+        uses: android-actions/setup-android@v3
+      - name: Install NDK r28 & SDK 36
+        run: |
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.0.13004108"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.13004108" >> $GITHUB_ENV
+
+      - name: Build patterniha/AndroidLibXrayLite (minSdk 24 + 16KB aligned)
+        run: |
+          git clone --depth=1 https://github.com/patterniha/AndroidLibXrayLite.git /tmp/AndroidLibXrayLite
+          cd /tmp/AndroidLibXrayLite
+          MOBILE_VER=$(go list -m -f '{{.Version}}' golang.org/x/mobile || echo "latest")
+          go install golang.org/x/mobile/cmd/gomobile@${MOBILE_VER}
+          go install golang.org/x/mobile/cmd/gobind@${MOBILE_VER}
+          export PATH="$PATH:$(go env GOPATH)/bin"
+          gomobile init
+          go mod tidy
+          mkdir -p "${GITHUB_WORKSPACE}/app/libs"
+          gomobile bind -v \
+            -target=android/arm64,android/arm,android/386,android/amd64 \
+            -androidapi 24 \
+            -trimpath \
+            -ldflags="-s -w -buildid= -checklinkname=0 -extldflags=-Wl,-z,max-page-size=16384" \
+            -o "${GITHUB_WORKSPACE}/app/libs/libv2ray.aar" ./
+
+      - name: Download official hev-socks5-tunnel.aar
+        run: |
+          mkdir -p app/libs
+          curl -fsSL --retry 3 \
+            "https://github.com/heiher/hev-socks5-tunnel/releases/latest/download/hev-socks5-tunnel.aar" \
+            -o app/libs/hev-socks5-tunnel.aar
+
+      - name: Download Chocolate4U Iran GeoIP & GeoSite assets
+        run: |
+          mkdir -p app/src/main/assets
+          curl -fsSL --retry 3 \
+            "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geoip.dat" \
+            -o app/src/main/assets/geoip.dat
+          curl -fsSL --retry 3 \
+            "https://raw.githubusercontent.com/Chocolate4U/Iran-v2ray-rules/release/geosite.dat" \
+            -o app/src/main/assets/geosite.dat
+
+      - name: Prepare latest Serverless-oob.jsonc + PattNG Iran routing
+        run: python3 scripts/prepare_config.py app/src/main/assets/config.json
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+
+      - name: Build Release APKs (Universal + Per-ABI) & Play Store AAB
+        run: |
+          gradle assembleRelease bundleRelease --no-daemon
+
+      - name: Verify 16 KB ELF alignment on arm64-v8a libraries
+        run: |
+          READELF="$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-readelf"
+          mkdir -p /tmp/apk_check
+          unzip -o app/build/outputs/apk/release/*universal*.apk "lib/arm64-v8a/*.so" -d /tmp/apk_check
+          for so in /tmp/apk_check/lib/arm64-v8a/*.so; do
+            echo "Checking $so ..."
+            $READELF -l "$so" | grep -E "LOAD.*0x4000" || echo "WARN: Check alignment of $so"
+          done
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: direct-access-release
+          path: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
